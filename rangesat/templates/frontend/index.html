@@ -1,0 +1,94 @@
+{% load bootstrap4 %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Rangesat</title>
+    {% load static %}
+    <script src="{% static 'js/jquery-3.1.1.min.js' %}"></script>
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+  </head>
+<body>
+  <div class="container" style="max-width: 954px;">
+      <div class="d-none d-xl-block d-lg-block" style="background-image: url({% static 'images/landing_background.png' %}); height: 340px; width: 954px;">
+          <div style="color: white; padding-top: 25px; padding-left: 15px; font-size: 22pt;">
+              RangeSAT: Providing Rangeland Vegetation Monitoring<br/>
+              Tools for adaptive Monitoring and Management
+          </div>
+      </div>
+      <div class="d-lg-none" style="background-image: url({% static 'images/pano.jpg' %}); height: 200px;">
+          <div style="color: darkolivegreen; padding: 10px; font-size: 18pt; font-weight: bold;">
+              RangeSAT: Providing Rangeland Vegetation Monitoring
+              Tools for adaptive Monitoring and Management
+          </div>
+      </div>
+      <div style="padding: 1em;">
+          <h3>Description:</h3>
+          <p>RangeSAT visualizes and graphs estimates of vegetation (biomass, cover, NDVI) at management scales derived
+              from Landsat satellite data. The interface lets users easily map vegetation biomass and cover across their
+              ranch or management area, graph vegetation amounts at multiple times within a year as well as track
+              vegetation amounts across years . This interface also graphs precipitation to help with decision making
+              and interpretation of year to year vegetation fluctuations.</p>
+          <p>RangeSAT is an ongoing project being developed at the University of Idaho, in partnership with The Nature
+              Conservancy. Feedback, comments and questions can be directed to <b>vjansen@uidaho.edu</b>.</p>
+
+          <br/>
+          <h3>Data sources:</h3>
+          <h5>Vegetation Data:</h5>
+          <p>Bunchgrass biomass and cover data: Jansen, et al., 2018</p>
+          <p>Sagebrush Steppe: preliminary models created, 2 more years of data collection underway</p>
+
+          <br/>
+          <h5>Climate data:</h5>
+          <p>GridMet: Abatzoglou, 2011 (<a href="http://www.climatologylab.org/gridmet.html">Climatology Lab</a>)</p>
+
+          <br/>
+          <h3>Sites:</h3>
+          <h5>Zumwalt Prairie</h5>
+          <a href="r/TNC">View The Nature Conservancy Ranch</a>
+          <h5>Rock Creek Ranch</h5>
+          <a href="r/RCR">View Rock Creek Ranch</a>
+
+          <br/>
+          <h3>Project Links:</h3>
+          <p><a href="https://www.nature.org/en-us/about-us/where-we-work/united-states/oregon/stories-in-oregon/space-cowboys/">Using satellite Imagery for Sustainable Grazing (TNC)</a></p>
+          <p><a href="https://www.uidaho.edu/cnr/rangeland-center/about.aspx">University of Idaho Rangeland Center</a></p>
+          <p><a href="https://www.uidaho.edu/cnr/rangeland-center/rock-creek">Rinker Rock Creek Ranch - Idaho</a></p>
+          <p><a href="https://www.nature.org/en-us/get-involved/how-to-help/places-we-protect/zumwalt-prairie/">Zumwalt Prairie Preserve - Oregon</a></p>
+
+          <br/>
+          <h3>References:</h3>
+          <p>Jansen, V. S., Kolden, C. A., Schmalz, H. J. (2018). The Development of Near Real-Time Biomass and Cover
+              Estimates for Adaptive Rangeland Management Using Landsat 7 and Landsat 8 Surface Reflectance Products.
+              <i>Remote Sensing 10</i> (1), 1057. <a href="https://doi.org/10.3390/rs10071057">doi:10.3390/rs10071057
+              </a></p>
+
+          <p>Abatzoglou, J. T. (2011). Development of gridded surface meteorological data for ecological applications
+              and modelling. <i>International Journal of Climatology, 33</i> (1),
+              <a href="https://doi.org/10.1002/joc.3413">doi:10.1002/joc.3413</a></p>
+
+          <br/>
+          <h3>Created by:</h3>
+          <p>Built by Roger Lew, Vincent S. Jansen, Jason W. Karl, Crystal A. Kolden</p>
+
+          <br/>
+          <h3>Affiliations:</h3>
+          <div class="row">
+              <div class="col-sm-3">
+                  <img src="{% static 'images/u-of-i-logo-2018.svg' %}" alt="University of Idaho official logo" style="width:160px; margin-top: 5px;">
+              </div>
+              <div class="col-sm-3">
+                  <img src="{% static 'images/tnc-logo.png' %}" alt="The Nature Conservancy Logo" style="width:160px;">
+              </div>
+              <div class="col-sm-3">
+                  <img src="{% static 'images/usda-northwest-climate-hub.png' %}" alt="Northwest Climate Hub" style="width:220px;">
+              </div>
+              <div class="col-sm-3">
+                  <img src="{% static 'images/usda-nrcs-logo.png' %}" alt="" style="width:180px;">
+              </div>
+          </div>
+      </div>
+  </div>
+</body>
+</html>

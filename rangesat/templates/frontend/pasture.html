@@ -1,0 +1,66 @@
+{% load json_tag %}
+{% load bootstrap4 %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Pasture: {{ pasture.name }}</title>
+    {% load static %}
+    <script src="{% static 'js/jquery-3.1.1.min.js' %}"></script>
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  </head>
+<body>
+
+  <div class="container">
+    <h2>Pasture: {{ pasture.name }}</h2>
+    <dl class="dl-horizontal">
+        <dt>Ranch</dt>
+        <dd>{{ pasture.ranch.name }}</dd>
+        <dt>Area (acres)</dt>
+        <dd>{{ pasture.acres }}</dd>
+    </dl>
+    <div id="pr-annual-graph"></div>
+    <div id="pr-graph"></div>
+    <div id="shrub-biomass-graph"></div>
+    <div id="biomass-graph"></div>
+  </div>
+
+  <script type="text/javascript">
+    var gridmet_pr_data = {{ gridmet_pr_data | safe}};
+
+
+    var annual_pr_data = {{ annual_pr_data | safe }};
+
+    var biomass_trend_data = {{ biomass_trend_data | safe }};
+
+    var shrub_biomass_annuals = {{ shrub_biomass_annuals | safe }};
+
+    Plotly.newPlot('pr-annual-graph',
+        [annual_pr_data],
+        {'title': 'Annual Precipitation (in)'},
+        {responsive: true});
+
+
+    Plotly.newPlot('pr-graph', gridmet_pr_data,
+            {
+          title:'Cumulative Precipitation (in)',
+          xaxis: {'automargin': true,
+                  'type' : 'categorical',
+                  'categoryarray' : {{ categoryarray | safe}}
+          }
+        }, {responsive: true});
+
+
+    if (shrub_biomass_annuals !== null) {
+        Plotly.newPlot('shrub-biomass-graph', [shrub_biomass_annuals], {'title': ' Annual Shrub Biomass (lb/Acre)'}, {responsive: true});
+    }
+
+    if (biomass_trend_data !== null) {
+        Plotly.newPlot('biomass-graph', biomass_trend_data, {'title': 'Biomass (lb/Acre)'}, {responsive: true});
+    }
+
+  </script>
+</body>
+</html>

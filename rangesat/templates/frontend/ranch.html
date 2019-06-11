@@ -1,0 +1,400 @@
+{% load json_tag %}
+{% load leaflet_tags %}
+{% load bootstrap4 %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Ranch: {{ ranch.name }}</title>
+    {% load static %}
+    <script src="{% static 'js/jquery-3.1.1.min.js' %}"></script>
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+    {% leaflet_js %}
+    {% leaflet_css %}
+    <script src="{% static 'js/tinyqueue.js' %}"></script>
+    <script src="{% static 'js/polylabel.js' %}"></script>
+    <script src="{% static 'js/colormap.js' %}"></script>
+    <script src="https://stuartmatthews.github.io/leaflet-geotiff/vendor/geotiff.js"></script>
+    <script src="https://stuartmatthews.github.io/leaflet-geotiff/vendor/plotty.js"></script>
+    <script src="{% static 'js/leaflet-geotiff.js' %}"></script>
+    <style>
+        html, body {
+            height: 100%;
+        }
+        .leaflet-container {
+            min-height: 100%;
+            height: 100%;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid" style="background-color: #f3f3f3; min-height: 100%; height: 100%;">
+    <div class="row"  style="min-height: 100%; height: 100%;">
+    <div class="controls col-md-4 col-xs-12">
+        <h1>Rangesat</h1>
+
+        {% if user.is_authenticated %}
+            Hello {{ user.username  }}
+        {% endif %}
+
+        <div style="height: 40px;"></div>
+        <h4>Ranch: {{ ranch.description }}</h4>
+        <form>
+            <div class="form-group">
+                <label for="analysis_type">Biomass Type</label>
+                <select class="form-control" id="analysis_type" >
+                {% for name in ranch.analysis_types %}
+                    <option value="{{ name }}"
+                            {% if measure == name %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="measure">Measure</label>
+                <select class="form-control" id="measure" >
+                {% for name, d in valid_measures.items %}
+                    <option value="{{ name }}"
+                            {% if measure == name %}selected{% endif %}>{{ d.label }}</option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                {% for type_, dates in ranch.scene_dates.items %}
+                    <div id="{{ type_ }}_acquisition_date_container">
+
+                    <label for="acquisition_date">Date</label>
+                    <select class="form-control" id="{{ type_ }}_acquisition_date" >
+                        {% for date in dates %}
+                        <option value='{{ date }}'
+                                {% if acquisition_date == date %}selected{% endif %}>{{ date }}</option>
+                        {% endfor %}
+                    </select>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="form-group">
+                {% for name, d in valid_measures.items %}
+                    <div id="{{ name }}_tolerance_container">
+                    <label for="{{ name }}_tolerance">Colormapping Tolerance</label>
+                    <input id="{{ name }}_tolerance"
+                           type="range"
+                           min="{{ d.range_minimum }}"
+                           max="{{ d.range_maximum }}"
+                           step="{{ d.range_step }}"
+                           value="{{ d.tolerance }}"
+                           class="slider"
+                           style="height: 100%"> <span id="{{ name }}_tolerance_text" >{{ d.tolerance }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </form>
+    </div>
+    <div class="col-md-8 col-xs-12" style="min-height: 100%; height: 100%;">
+        {% leaflet_map "main" callback="main_map_init" %}
+    </div>
+    </div>
+
+    </div>
+
+    <script type="text/javascript">
+        const labelStyle = "font-size: larger; text-shadow: -1px -1px 0 #FFF, 1px -1px 0 #FFF, -1px 1px 0 #FFF, 1px 1px 0 #FFF;";
+
+        var _map;
+        var _polys;
+        var raster;
+        var popup;
+        var labels;
+
+        var valid_measures = {{ valid_measures | json}};
+
+        function _show_correct_tolerance_slider(measure) {
+            {% for name in valid_measures %}
+            $('#{{ name }}_tolerance_container').addClass('d-none');
+            {% endfor %}
+
+            $('#' + measure + '_tolerance_container').removeClass('d-none');
+        }
+
+        function _show_correct_date_select(analysis_type) {
+            {% for type_ in ranch.analysis_types %}
+            $('#{{ type_ }}_acquisition_date_container').addClass('d-none');
+            {% endfor %}
+
+            $('#' + analysis_type + '_acquisition_date_container').removeClass('d-none');
+        }
+
+        function load_data () {
+
+            let ranch = '{{ ranch.name }}';
+            let measure = $('#measure').val();
+            let analysis_type = $('#analysis_type').val();
+            let acquisition_date = $('#' + analysis_type +'_acquisition_date').val();
+
+            _show_correct_tolerance_slider(measure);
+            _show_correct_date_select(analysis_type);
+
+            let cmap_name = valid_measures[measure].cmap_name;
+            let source = valid_measures[measure].source;
+            let tolerance = $('#' + measure + '_tolerance').val();
+
+            var cmap = createColormap({ colormap: cmap_name, nshades: 64 });
+
+            if (source === 'pasturestats') {
+                $.getJSON('/api/pasturestats/',
+                    { ranch: ranch,
+                      analysis_type: analysis_type,
+                      acquisition_date: acquisition_date },
+                    function (data) {
+                    var d = {};
+                    for (var i = 0; i < data.length; i++) {
+                        let ps = data[i];
+                        d[ps.pasture__id.toString()] = ps[measure];
+                    }
+
+                    _polys.eachLayer(function (layer) {
+                        var pk = layer.feature.properties.pk;
+                        var name = layer.feature.properties.name;
+                        var v;
+
+                        try {
+                            v = parseFloat(d[pk]);
+                            if (v === -9999.0) {
+                                v = NaN
+                            }
+                        } catch (e) {
+                            v = NaN;
+                        }
+
+                        if (~isNaN(v)) {
+                            let c = cmap.map(v / tolerance);
+                            layer.setStyle({
+                                color: c,
+                                weight: 1,
+                                opacity: 0.9,
+                                fillColor: c,
+                                fillOpacity: 0.9
+                            });
+                        } else {
+                            layer.setStyle({
+                                color: '#0000FF',
+                                weight: 1,
+                                opacity: 0.9,
+                                fillColor: 'transparent',
+                                fillOpacity: 1.0
+                            });
+                        }
+
+                        layer.on({
+                            click: function click(ev) {
+
+                                const content =
+                                    '<h5>' + name + '</h5>' +
+                                    '<a href="/p/' + pk+ '/">View Pasture</a>';
+
+                                popup = L.popup()
+                                    .setLatLng(ev.latlng)
+                                    .setContent(content)
+                                    .openOn(_map);
+                            }
+
+                        });
+                    });
+                });
+            } else if (source === 'rasterdata') {
+                $.getJSON('/api/rasterdata/',
+                    { ranch: ranch,
+                      analysis_type: analysis_type,
+                      analysis_name: measure,
+                      acquisition_date: acquisition_date },
+                    function (data) {
+                    var url = data[0]['wgs_raster'];
+                    var options = {
+                        clampLow: false,
+                        displayMin: 0,
+                        displayMax: tolerance,
+                        colorScale: cmap_name
+                    };
+
+                    if (raster !== undefined) {
+                        raster.removeFrom(_map.layerscontrol);
+                        raster.removeFrom(_map);
+                    }
+
+                    raster = L.leafletGeotiff(url=url, options=options);
+                    raster.addTo(_map);
+                    _map.layerscontrol.addOverlay(raster, "Gridded Data");
+
+                    _polys.eachLayer(function (layer) {
+                        var pk = layer.feature.properties.pk;
+                        var name = layer.feature.properties.name;
+                        var centroid = layer.feature.properties.centroid;
+
+                        layer.setStyle({
+                            color: 'blue',
+                            weight: 1,
+                            opacity: 0.9,
+                            fillColor: 'transparent',
+                            fillOpacity: 0.0
+                        });
+
+                        layer.on({
+                            click: function click(ev) {
+
+                                const content =
+                                    '<h5>' + name + '</h5>' +
+                                    '<a href="/p/' + pk + '/">View Pasture</a>';
+
+                                popup = L.popup()
+                                    .setLatLng(ev.latlng)
+                                    .setContent(content)
+                                    .openOn(_map);
+                            }
+
+                        });
+                    });
+                })
+            }
+
+            render_legend(cmap_name, 0, tolerance);
+        }
+
+
+        function render_legend_cmap(cmap, canvasID) {
+            var canvas = $("#" + canvasID);
+
+            var width = canvas.outerWidth();
+            var height = canvas.outerHeight();
+            var data = new Float32Array(height * width);
+
+            for (var y = 0; y <= height; y++) {
+                for (var x = 0; x <= width; x++) {
+                    data[(y*width)+x] = x / (width - 1.0);
+                }
+            }
+
+            var plot = new plotty.plot({
+                canvas: canvas["0"],
+                data: data, width: width, height: height,
+                domain: [0, 1], colorScale: cmap
+            });
+            plot.render();
+        }
+
+        var Legend = L.Control.extend({
+            options: {
+                position: 'bottomleft'
+            },
+            initialize: function (options) {
+                // constructor
+            },
+            onAdd: function (map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+
+                var vmin = '0';
+                var vmax = $('#measure').val()
+                container.style.backgroundColor = 'white';
+                container.style.width = '240px';
+                container.style.height = '90px';
+                container.innerHTML =
+                    '<div style="padding-left: 10px; padding-right: 10px; padding-top: 5px;">' +
+                    '<h6>Legend</h6>' +
+                    '<canvas id="legend_canvas" width=180 height=20 ' +
+                    'style="width:200px;height:20px;display:table;margin:0 auto;"></canvas>' +
+                    '<div class="row">' +
+                    '<div class="col-md-4"><span id="legend_vmin"></span></div>' +
+                    '<div class="col-md-4" style="text-align: center;"></div>' +
+                    '<div class="col-md-4" style="text-align: right;"><span id="legend_vmax"></span></div>' +
+                    '</div>' +
+                    '</div>';
+
+                return container;
+            },
+            onRemove: function (map) {
+                // when removed
+            }
+        });
+
+        var legend;
+
+        function render_legend(cmap_name, vmin, vmax) {
+            if (legend !== undefined) {
+                legend.remove();
+            }
+            legend = new Legend();
+            _map.addControl(legend);
+            render_legend_cmap(cmap_name, 'legend_canvas');
+
+            $('#legend_vmin').html(vmin.toString());
+            $('#legend_vmax').html(vmax.toString());
+        }
+
+        function main_map_init (map, options) {
+            _map = map;
+
+            map.fitBounds([
+                [{{ ranch.ll.y }}, {{ ranch.ll.x }}],
+                [{{ ranch.ur.y }}, {{ ranch.ur.x }}]
+            ]);
+
+            // Download GeoJSON via Ajax
+            $.getJSON('/api/geojson/{{ ranch.name }}/',
+                function (data) {
+                    // Add GeoJSON layer
+                    _polys = L.geoJson(data);
+                    _polys.addTo(map);
+                    _map.layerscontrol.addOverlay(_polys, "Pastures");
+
+                    labels = L.layerGroup();
+                    labels.addTo(map);
+                    _map.layerscontrol.addOverlay(labels, "Pasture Labels");
+
+                    _polys.eachLayer(function (layer) {
+                        var pk = layer.feature.properties.pk;
+                        var name = layer.feature.properties.name;
+                        var centroid = layer.feature.properties.centroid;
+
+                        var i0 = centroid.indexOf('(');
+                        var iend = centroid.indexOf(')');
+                        var center = centroid.substring(i0 + 1, iend);
+                        center = center.split(' ');
+                        center = [parseFloat(center[1]), parseFloat(center[0])];
+                        var label = L.marker(center, {
+                            icon: L.divIcon({
+                                iconSize: null,
+                                className: "label",
+                                html: "<div style=\"" + labelStyle + "\">" + name + "</div>"
+                            })
+                        });
+                        labels.addLayer(label);
+                    });
+                }
+            ).done(load_data);
+
+
+            $('#measure').change(function () {
+                load_data();
+            });
+
+            $('#analysis_type').change(function () {
+                load_data();
+            });
+
+
+            {% for type_ in ranch.analysis_types%}
+            $('#{{ type_ }}_acquisition_date').change(function () {
+                load_data();
+            });
+            {% endfor %}
+
+            {% for name in valid_measures %}
+            $('#{{ name }}_tolerance').change(function () {
+                $('#{{ name }}_tolerance_text').html($('#{{ name }}_tolerance').val());
+                load_data();
+            });
+            {% endfor %}
+
+        }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+.gitattributes
+*.tar.gz
+*.idea
+*.tif
+*.zip
+*.sqlite3
+venv
+rangesat/database/migrations
+rangesat/rangesat/settings.py
