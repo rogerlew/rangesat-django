@@ -1,4 +1,5 @@
-.gitattributes
+.DS_Store
+*.pyc
 *.tar.gz
 *.idea
 *.tif
