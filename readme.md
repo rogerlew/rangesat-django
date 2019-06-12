@@ -35,7 +35,7 @@ to work. (My best guess is a configuration issue.) So the rasters are using
 projects the rasters are a bit too large to make it snappy. This might need some
 attention.
 
-[https://rangesat.nkn.uidaho.edu/api/] (https://rangesat.nkn.uidaho.edu/api/)
+![https://rangesat.nkn.uidaho.edu/api/] (https://rangesat.nkn.uidaho.edu/api/)
 
 
 ### Frontend
@@ -74,8 +74,6 @@ easier.
 
 
 The database model schemas have changed from this version. The new model is
-here:
-
-[https://github.com/rogerlew/rangesat-biomass] (https://github.com/rogerlew/rangesat-biomass)
+here: [https://github.com/rogerlew/rangesat-biomass] (https://github.com/rogerlew/rangesat-biomass)
 
 [Zumwalt_rangesat-biomass_output.zip] (https://vandalsuidaho-my.sharepoint.com/:u:/g/personal/rogerlew_uidaho_edu/EWSIWOGCBylPk-isC0K2XcABpHArVIYaMOZm7Q4BjCq5jQ?e=AxyDly)
