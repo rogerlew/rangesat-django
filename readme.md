@@ -9,14 +9,14 @@ The data products of interest are:
 - historical climate data from GridMET.
 
 
- == Implementation Overview
+## Implementation Overview
 
 
 The quick explanation for how this is implemented is that it is a django project
 with a Postgres11 (PostGIS) database.
 
 
- === Database/REST
+### Database/REST
 
 
  A backend with an API is built with
@@ -38,7 +38,7 @@ attention.
 [https://rangesat.nkn.uidaho.edu/api/]: https://rangesat.nkn.uidaho.edu/api/
 
 
- === Frontend
+### Frontend
 
 
 django uses (can use) jinja2 templating to serve views. The frontend consists of
@@ -53,7 +53,7 @@ loaded. This occurs in `rangesat.frontend.views.ranch_view` and the server-side.
 The client-side exists in `rangesat/templates/frontend/ranch.html`.
 
 
- === Future
+### Future
 
 
 Alot of the templating is really cheating to get data into the page, so that is
@@ -70,7 +70,7 @@ e.g. ?ranches=['TNC', 'RCR']. I think this will also make user permissions
 easier.
 
 
- === Biomass models
+### Biomass models
 
 
 The database model schemas have changed from this version. The new model is
