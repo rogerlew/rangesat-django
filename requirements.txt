@@ -25,7 +25,7 @@ idna==2.8
 jmespath==0.9.3
 kiwisolver==1.0.1
 kombu==4.2.2.post1
-lxml==4.3.0
+lxml==4.6.3
 matplotlib==3.0.2
 netCDF4==1.4.2
 numpy==1.16.0
